@@ -30,6 +30,7 @@ dependencies:
   firebase_core: ^1.17.0
   firebase_auth: ^3.3.18
   cupertino_icons: ^1.0.2
+  google_sign_in: ^4.5.1
   flutter:
     sdk: flutter
   google_fonts: ^3.0.1

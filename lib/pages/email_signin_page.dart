@@ -24,7 +24,17 @@ class EmailSignInPage extends StatelessWidget {
 
             //* SIGN IN STATUS
             // CODE HERE: Change status based on current user
-            const Text("You haven't signed in yet"),
+            StreamBuilder<User?>(
+              stream: FirebaseAuth.instance.userChanges(),
+              builder: (context, snapshot) {
+                if(snapshot.hasData){
+                  return Text("Sign In ${snapshot.data?.email}");
+                } 
+                else{
+                  return const Text("You haven't signed in yet");
+                }       
+              }
+            ),
 
             //* EMAIL TEXTFIELD
             Container(
@@ -64,10 +74,32 @@ class EmailSignInPage extends StatelessWidget {
                           backgroundColor: MaterialStateProperty.all(
                               Colors.orange.shade900)),
                       onPressed: () async {
-                        // CODE HERE: Sign up with email & password / Sign out from firebase
+                       if(FirebaseAuth.instance.currentUser == null)
+                       {
+                        try{await FirebaseAuth.instance.createUserWithEmailAndPassword(
+                        email: emailController.text, 
+                        password: passwordController.text);}
+                        on FirebaseAuthException 
+                        catch(e) {
+                          showNotification(context, e.message.toString());
+                        }
+                       }
+                      else{
+                        await FirebaseAuth.instance.signOut();
+                      }
                       },
                       // CODE HERE: Change button text based on current user
-                      child: const Text("Sign Up")),
+                      child: StreamBuilder<User?>(
+                        stream: FirebaseAuth.instance.userChanges(),
+                        builder: (context, snapshot) {
+                          if(snapshot.hasData){
+                            return const Text('Sign Out');
+                          }
+                          else{
+                            return const Text("Sign Up");
+                          }                          
+                        }
+                      )),
                 ),
                 const SizedBox(
                   width: 15,
@@ -81,10 +113,32 @@ class EmailSignInPage extends StatelessWidget {
                           backgroundColor: MaterialStateProperty.all(
                               Colors.orange.shade900)),
                       onPressed: () async {
-                        // CODE HERE: Sign in with email & password / Sign out form firebase
+                        
+                        if(FirebaseAuth.instance.currentUser == null) {
+                          try{await FirebaseAuth.instance.signInWithEmailAndPassword(
+                            email: emailController.text, password: passwordController.text);}
+                            on FirebaseAuthException 
+                        catch(e) {
+                          showNotification(context, e.message.toString());
+                        }
+                        }
+                        else
+                        {
+                          await FirebaseAuth.instance.signOut();
+                        }
                       },
-                      // CODE HERE: Change button text based on current user
-                      child: const Text("Sign In")),
+                      
+                      child: StreamBuilder<User?>(
+                        stream: FirebaseAuth.instance.userChanges(),
+                        builder: (context, snapshot) {
+                          if(snapshot.hasData){
+                            return const Text('Sign Out');
+                          }
+                          else{
+                            return const Text("Sign In");
+                          }                          
+                        }
+                      )),
                 ),
               ],
             ),
@@ -92,7 +146,12 @@ class EmailSignInPage extends StatelessWidget {
             //* RESET PASSWORD BUTTON
             TextButton(
                 onPressed: () async {
-                  // CODE HERE: Send reset code to the given email
+                  try {
+                    await FirebaseAuth.instance.sendPasswordResetEmail(email: emailController.text);
+                  } on FirebaseAuthException 
+                        catch(e) {
+                          showNotification(context, e.message.toString());
+                        }
                 },
                 child: Text(
                   'Forgot password?',
